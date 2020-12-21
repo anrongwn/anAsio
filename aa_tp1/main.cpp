@@ -40,9 +40,9 @@ private:
 
 		asio::async_write(socket_, asio::buffer(data_, length), [this, self](const asio::error_code& ec, std::size_t length) {
 			if (!ec){
-                std::cout << "***async_write data=" << std::string(data_, length) << ", length=" << length << std::endl;
+				std::cout << "***async_write data=" << std::string(data_, length) << ", length=" << length << std::endl;
 
-                do_read();
+				do_read();
 			} else {
 				socket_.close();
 
@@ -53,7 +53,9 @@ private:
 private:
     tcp::socket socket_;
     enum{max_length=65536};//保证足够的吞吐，但占用内存。
-    char data_[max_length];
+	char data_[max_length];
+
+	std::array<char, max_length> data2_;
 };
 
 
