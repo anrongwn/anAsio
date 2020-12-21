@@ -55,6 +55,16 @@
         "typeindex": "cpp",
         "valarray": "cpp",
         "random": "cpp",
-        "iomanip": "cpp"
+        "iomanip": "cpp",
+        "strstream": "cpp",
+        "csetjmp": "cpp",
+        "csignal": "cpp",
+        "rope": "cpp",
+        "slist": "cpp",
+        "future": "cpp",
+        "scoped_allocator": "cpp",
+        "shared_mutex": "cpp",
+        "cfenv": "cpp",
+        "*.ipp": "cpp"
     }
 }

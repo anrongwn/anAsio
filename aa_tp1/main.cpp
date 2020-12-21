@@ -27,7 +27,11 @@ private:
                 std::cout << "***async_read_some data=" << std::string(data_, lenght) << ", lenght=" << lenght << std::endl;
 
                 do_write(lenght);
-            }
+			} else {
+				socket_.close();
+
+				std::cerr << "***async_read_some data error, " << ec.message() << std::endl;
+			}
 		});
 	}
 
@@ -39,7 +43,11 @@ private:
                 std::cout << "***async_write data=" << std::string(data_, length) << ", length=" << length << std::endl;
 
                 do_read();
-            }
+			} else {
+				socket_.close();
+
+				std::cerr << "***async_write data error, " << ec.message() << std::endl;
+			}
 		});
 	}
 private:
@@ -51,43 +59,116 @@ private:
 
 class echo_service{
 public:
-    echo_service(asio::io_context &io, short port) : acceptor_(io, tcp::endpoint(tcp::v4(), port)) {
-		acceptor_.set_option(asio::socket_base::reuse_address(true));
-		do_accept();
-    }
-    echo_service()=delete;
+  explicit echo_service(const std::string &addr, short port) : io_(2), acceptor_(io_), signals_(io_) {
+
+	  signals_.add(SIGTERM);
+	  signals_.add(SIGPIPE);
+	  signals_.add(SIGINT);
+
+	  do_await_stop();
+
+	  //
+	  asio::ip::address add;
+	  add.from_string(addr);
+	  tcp::endpoint ep(add, port);
+	  acceptor_.open(ep.protocol());
+	  acceptor_.set_option(asio::socket_base::reuse_address(true));
+	  acceptor_.bind(ep);
+	  acceptor_.listen();
+
+	  do_accept();
+  }
+	echo_service()=delete;
+	echo_service(const echo_service &) = delete;
+	echo_service &operator=(const echo_service &) = delete;
+	echo_service(echo_service &&) = delete;
+	echo_service &operator=(echo_service &&) = delete;
+
+	asio::io_context::count_type run() { return io_.run(); }
+
+	void signal_handler(const asio::error_code &ec, int signal_num) {
+		if (!ec) {
+			switch (signal_num) {
+			case SIGINT:
+				std::cout << "signal_handler reciv SIGINT(" << signal_num << "),exit." << std::endl;
+				acceptor_.close();
+				io_.stop();
+				// exit(-1);
+				break;
+			case SIGTERM:
+				std::cout << "signal_handler reciv SIGTERM(" << signal_num << "),exit." << std::endl;
+				acceptor_.close();
+				io_.stop();
+				// exit(-1);
+				break;
+			case SIGPIPE:
+				std::cout << "signal_handler reciv SIGPIPE(" << signal_num << "),ignore." << std::endl;
+				break;
+			default:
+				std::cout << "signal_handler reciv other(" << signal_num << "),exit." << std::endl;
+				acceptor_.close();
+				io_.stop();
+				exit(-1);
+				break;
+			}
+		}
+	}
+
 private:
     void do_accept(){
-		acceptor_.async_accept([this](const asio::error_code& ec, tcp::socket socket) {
+		acceptor_.async_accept([this](const asio::error_code &ec, tcp::socket socket) {
+			if (!acceptor_.is_open()) {
+				return;
+			}
+
 			if (!ec){
                 auto peer =socket.remote_endpoint();
                 std::cout<<"=====echo_service accept from: " << peer.address() << ":" << peer.port() << "(" << peer.protocol().type() <<")."<<std::endl;
 
-                std::make_shared<session>(std::move(socket))->start();//启动当前session读写
-            }
+				std::make_shared<session>(std::move(socket))->start(); //启动当前session读写
 
-            do_accept();
+				do_accept();
+			} else {
+				std::cerr << "=====echo_service accept error, " << ec.message() << std::endl;
+			}
 		});
 	}
-    
-    tcp::acceptor acceptor_;
-};
 
+	void do_await_stop() {
+		signals_.async_wait(
+			std::bind(&echo_service::signal_handler, this, std::placeholders::_1, std::placeholders::_2));
+	}
+
+  private:
+	asio::io_context io_;
+	tcp::acceptor acceptor_;
+	asio::signal_set signals_;
+};
 
 int main(int argc, char *argv[]) {
 
-    if (argc!=2){
-        std::cerr << "Usage: ./aa_tp1 <port>\n";
-        return 1;
-    }
+	if (argc != 3) {
+		std::cerr << "Usage: ./aa_tp1 <address> <port>\n";
+		return 1;
+	}
 
-    try{
-        asio::io_context io;
+	try{
+		// asio::io_context io(1);
 
-        echo_service svr(io, std::atoi(argv[1]));
-        
-	    io.run();
-    }catch(std::exception& e){
+		// asio::signal_set signals(io, SIGINT, SIGTERM, SIGPIPE);
+		// signals.add(SIGTERM);
+		// signals.add(SIGPIPE);
+		// signals.add(SIGINT);
+
+		echo_service svr(std::string(argv[1]), std::atoi(argv[2]));
+
+		// signals.async_wait(
+		//	std::bind(&echo_service::signal_handler, &svr, std::placeholders::_1, std::placeholders::_2));
+
+		// io.run();
+		svr.run();
+
+	}catch(std::exception& e){
         std::cerr << "Exception : " << e.what() << std::endl;
         return 1;
     }
