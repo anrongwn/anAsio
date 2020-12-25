@@ -175,7 +175,7 @@ int main(int argc, char *argv[]) {
 		***/
 
 		/**coroutine**/
-		asio::io_context io;
+		asio::io_context io(2);
 
 		asio::spawn(io, [&](asio::yield_context yield) {
 			std::cout << std::this_thread::get_id() << " acceptor spawn begin" << std::endl;

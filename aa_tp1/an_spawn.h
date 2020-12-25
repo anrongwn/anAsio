@@ -49,8 +49,20 @@ class spawn_session : public std::enable_shared_from_this<spawn_session> {
 			while (socket_.is_open()) {
 				asio::error_code ignored_ec;
 
+				timer_.expires_from_now(std::chrono::seconds(30));
 				timer_.async_wait(yield[ignored_ec]);
 
+				if (!ignored_ec) {
+					std::cout << std::this_thread::get_id() << " timer_.async_wait(yield[ignored_ec]) "
+							  << ignored_ec.message() << ignored_ec.value() << " timeouted, close client socket." <<  std::endl;
+					socket_.close();
+					break;
+				} else {
+					std::cout << std::this_thread::get_id() << " timer_.async_wait(yield[ignored_ec]) "
+							  << ignored_ec.message() << ignored_ec.value() << std::endl;
+				}
+
+				/*
 				auto exp = timer_.expires_from_now();
 				if (exp <= std::chrono::seconds(0)) {
 					// std::cout << std::this_thread::get_id() << " timer_.expires_from_now() " << exp.count()
@@ -60,6 +72,7 @@ class spawn_session : public std::enable_shared_from_this<spawn_session> {
 
 					// socket_.close();
 				}
+				*/			
 			}
 		});
 
