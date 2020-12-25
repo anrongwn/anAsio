@@ -1,5 +1,5 @@
 #include "asio.hpp"
-#include "spawn.h"
+#include "an_spawn.h"
 #include <cstdlib>
 #include <functional>
 #include <iostream>
@@ -176,15 +176,18 @@ int main(int argc, char *argv[]) {
 
 		/**coroutine**/
 		asio::io_context io;
-		
-		asio::spawn(io, [&](asio::yield_context yield){
+
+		asio::spawn(io, [&](asio::yield_context yield) {
+			std::cout << std::this_thread::get_id() << " acceptor spawn begin" << std::endl;
 			tcp::acceptor accepter(io, tcp::endpoint(tcp::v4(), std::atoi(argv[2])));
 			for(;;){
+				std::cout << std::this_thread::get_id() << " acceptor spawn loop" << std::endl;
 				asio::error_code ec;
 				tcp::socket ss(io);
-				accepter.async_accept(ss, yield[ec]);
+				accepter.async_accept(ss, yield[ec]); // 1
 				if (!ec){
-					std::make_shared<spawn_session>(io, std::move(ss))->go();
+					std::cout << std::this_thread::get_id() << " async_accept  " << std::endl;
+					std::make_shared<spawn_session>(io, std::move(ss))->go(); // 2
 				}
 			}
 		});

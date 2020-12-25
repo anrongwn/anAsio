@@ -1,5 +1,6 @@
 #pragma once
 
+#include <asio.hpp>
 #include <asio/io_context.hpp>
 #include <asio/ip/tcp.hpp>
 #include <asio/spawn.hpp>
@@ -13,7 +14,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <asio.hpp>
 
 using asio::ip::tcp;
 
@@ -24,38 +24,46 @@ class spawn_session : public std::enable_shared_from_this<spawn_session> {
 	spawn_session() = delete;
 
 	void go() {
+		std::cout << std::this_thread::get_id() << " spawn_session go begin" << std::endl;
 		auto self(shared_from_this());
 		asio::spawn(strand_, [this, self](asio::yield_context yield) {
 			try {
-				char data[1024]={0x00};
-				for(;;){
+				char data[1024] = {0x00};
+				for (;;) {
 					timer_.expires_from_now(std::chrono::microseconds(10));
+
 					std::size_t n = socket_.async_read_some(asio::buffer(data), yield);
+					std::cout << std::this_thread::get_id() << " async_read_some : " << std::string(data, n)
+							  << std::endl;
 
 					asio::async_write(socket_, asio::buffer(data, n), yield);
 				}
 
-			}  catch  (std::exception &ec)  {
+			} catch (std::exception &ec) {
 				socket_.close();
 				timer_.cancel();
 			}
-
 		});
 
-		asio::spawn(strand_, [this, self](asio::yield_context yield){
-			while(socket_.is_open()){
+		asio::spawn(strand_, [this, self](asio::yield_context yield) {
+			while (socket_.is_open()) {
 				asio::error_code ignored_ec;
 
 				timer_.async_wait(yield[ignored_ec]);
 
-				if (timer_.expires_from_now() <= std::chrono::seconds(0)){
-					socket_.close();
+				auto exp = timer_.expires_from_now();
+				if (exp <= std::chrono::seconds(0)) {
+					// std::cout << std::this_thread::get_id() << " timer_.expires_from_now() " << exp.count()
+					//		  << std::endl;
+
+					std::this_thread::yield();
+
+					// socket_.close();
 				}
-
-
 			}
-
 		});
+
+		std::cout << std::this_thread::get_id() << " spawn_session go end" << std::endl;
 	}
 
   private:
