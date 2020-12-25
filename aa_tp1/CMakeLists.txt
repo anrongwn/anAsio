@@ -24,7 +24,7 @@ aux_source_directory(. SRCS_DIR)
 #aux_source_directory(../deps/CJsonObject SRCS_DIR)
 #aux_source_directory(../deps/sqlite3.33 SRCS_DIR)
 
-#link_libraries(${UV_LIB} ${CURL_LIB})
+link_directories(${BOOST_LIB_DIC})
 #link_libraries(${TCMALLOC_LIB})
 add_executable(${aa_tp1_TARGET_NAME} ${SRCS_DIR})
 
@@ -41,7 +41,7 @@ if (NOT WIN32)
     #target_link_libraries(an3tp1 pthread dl rt z crypto ssl vrl)
 
     #link libnanomsg.a
-    target_link_libraries(${aa_tp1_TARGET_NAME} dl rt -pthread )
+    target_link_libraries(${aa_tp1_TARGET_NAME} dl libboost_coroutine.a libboost_thread.a libboost_context.a -pthread)
     
     #link libnng.a
     #target_link_libraries(${an3tp1_TARGET_NAME} dl rt -pthread nsl ${HIREDIS_LIB} ${NNG_LIB} )  

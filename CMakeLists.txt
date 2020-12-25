@@ -35,6 +35,7 @@ message("${CMAKE_PROJECT_NAME} BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
 set(DEPS_INCLUDE_DIC "${PROJECT_SOURCE_DIR}/deps/include")
 set(ASIO_INCLUDE_DIC "${PROJECT_SOURCE_DIR}/deps/asio-1.18.0/include")
 set(BOOST_INCLUDE_DIC "${PROJECT_SOURCE_DIR}/deps/boost_1_75_0/include")
+set(BOOST_LIB_DIC "${PROJECT_SOURCE_DIR}/deps/boost_1_75_0/lib/")
 
 #set(UV_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/deps/libuv-v1.37.0/include")
 #set(UV_LIB "${PROJECT_SOURCE_DIR}/deps/libuv-v1.37.0/lib/libuv_a.a")
@@ -67,6 +68,7 @@ endif()
 
 message("ASIO_INCLUDE_DIC = ${ASIO_INCLUDE_DIC}")
 message("BOOST_INCLUDE_DIC = ${BOOST_INCLUDE_DIC}")
+message("BOOST_LIB_DIC = ${BOOST_LIB_DIC}")
 
 
 if(NOT WIN32)

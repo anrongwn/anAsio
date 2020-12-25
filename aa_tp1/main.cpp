@@ -1,9 +1,10 @@
 #include "asio.hpp"
+#include "spawn.h"
+#include <cstdlib>
 #include <functional>
 #include <iostream>
 #include <memory>
 #include <utility>
-#include <cstdlib>
 
 using asio::ip::tcp;
 
@@ -155,6 +156,8 @@ int main(int argc, char *argv[]) {
 	}
 
 	try{
+		
+		/***
 		// asio::io_context io(1);
 
 		// asio::signal_set signals(io, SIGINT, SIGTERM, SIGPIPE);
@@ -169,6 +172,24 @@ int main(int argc, char *argv[]) {
 
 		// io.run();
 		svr.run();
+		***/
+
+		/**coroutine**/
+		asio::io_context io;
+		
+		asio::spawn(io, [&](asio::yield_context yield){
+			tcp::acceptor accepter(io, tcp::endpoint(tcp::v4(), std::atoi(argv[2])));
+			for(;;){
+				asio::error_code ec;
+				tcp::socket ss(io);
+				accepter.async_accept(ss, yield[ec]);
+				if (!ec){
+					std::make_shared<spawn_session>(io, std::move(ss))->go();
+				}
+			}
+		});
+
+		io.run();
 
 	}catch(std::exception& e){
         std::cerr << "Exception : " << e.what() << std::endl;
