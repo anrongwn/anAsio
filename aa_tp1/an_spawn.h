@@ -30,7 +30,7 @@ class spawn_session : public std::enable_shared_from_this<spawn_session> {
 			try {
 				char data[1024] = {0x00};
 				for (;;) {
-					timer_.expires_from_now(std::chrono::microseconds(10));
+					// timer_.expires_from_now(std::chrono::microseconds(10));
 
 					std::size_t n = socket_.async_read_some(asio::buffer(data), yield);
 					std::cout << std::this_thread::get_id() << " async_read_some : " << std::string(data, n)
@@ -49,7 +49,8 @@ class spawn_session : public std::enable_shared_from_this<spawn_session> {
 			while (socket_.is_open()) {
 				asio::error_code ignored_ec;
 
-				timer_.expires_from_now(std::chrono::seconds(30));
+				// timer_.expires_from_now(std::chrono::seconds(30));
+				timer_.expires_after(std::chrono::seconds(30));
 				timer_.async_wait(yield[ignored_ec]);
 
 				if (!ignored_ec) {
