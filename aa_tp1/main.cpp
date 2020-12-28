@@ -1,10 +1,13 @@
-#include "asio.hpp"
+#include "aa_strand.h"
 #include "an_spawn.h"
+#include "asio.hpp"
 #include <cstdlib>
 #include <functional>
 #include <iostream>
 #include <memory>
 #include <utility>
+#include <thread>
+#include <asio/io_context.hpp>
 
 using asio::ip::tcp;
 
@@ -148,6 +151,15 @@ private:
 	asio::signal_set signals_;
 };
 
+struct Task
+{
+    void doSomething(int task_type)
+    {
+        std::cout<<"task_type:"<<task_type<<std::endl;
+    }
+};
+
+
 int main(int argc, char *argv[]) {
 
 	if (argc != 3) {
@@ -174,7 +186,7 @@ int main(int argc, char *argv[]) {
 		svr.run();
 		***/
 
-		/**coroutine**/
+		/**coroutine
 		asio::io_context io(2);
 
 		asio::spawn(io, [&](asio::yield_context yield) {
@@ -193,6 +205,19 @@ int main(int argc, char *argv[]) {
 		});
 
 		io.run();
+		**/
+
+		std::cout << "main thread id = " << std::this_thread::get_id() << std::endl;
+		asio::io_context io;
+		printer p(io);
+		std::thread t([&io](){io.run();});
+
+		//Task task1;
+		//std::thread t(std::bind(&Task::doSomething, &task1, 2));
+		io.run();
+		
+		t.join();
+		
 
 	}catch(std::exception& e){
         std::cerr << "Exception : " << e.what() << std::endl;
