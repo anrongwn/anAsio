@@ -210,10 +210,15 @@ int main(int argc, char *argv[]) {
 		std::cout << "main thread id = " << std::this_thread::get_id() << std::endl;
 		asio::io_context io;
 		printer p(io);
-		std::thread t([&io](){io.run();});
+		std::thread t([&io]() {
+			std::cout << "sub thread id = " << std::this_thread::get_id() << std::endl;
+			io.run();
+		});
 
 		//Task task1;
 		//std::thread t(std::bind(&Task::doSomething, &task1, 2));
+		std::this_thread::sleep_for(std::chrono::microseconds(2000));
+
 		io.run();
 		
 		t.join();
